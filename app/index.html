@@ -204,12 +204,25 @@
   .lc .elbl{font-size:11px;font-weight:700;fill:var(--ink2)}
   .lc .band rect{fill:transparent}
   .lc .band line{stroke:transparent;stroke-width:1}
-  .lc .band:hover rect{fill:rgba(255,255,255,.03)}
-  .lc .band:hover line{stroke:rgba(255,255,255,.28)}
   .lc .band circle{opacity:0;transition:opacity .12s;pointer-events:none}
-  .lc .band:hover circle{opacity:1}
   .slice{transition:transform .15s;transform-box:view-box;transform-origin:center;cursor:default}
-  .slice:hover{transform:scale(1.035)}
+  /* destaque do ponto/fatia com a dica aberta: pelo mouse (hover) e pelo toque (classe tipon, que segue o dedo) */
+  @media (hover:hover){
+    .lc .band:hover rect{fill:rgba(255,255,255,.03)}
+    .lc .band:hover line{stroke:rgba(255,255,255,.28)}
+    .lc .band:hover circle{opacity:1}
+    .slice:hover{transform:scale(1.035)}
+  }
+  .lc .band.tipon rect{fill:rgba(255,255,255,.03)}
+  .lc .band.tipon line{stroke:rgba(255,255,255,.28)}
+  .lc .band.tipon circle{opacity:1}
+  .slice.tipon{transform:scale(1.035)}
+  .leg li.tipon{background:rgba(255,255,255,.03)}
+  /* no toque, segurar em cima de gráficos e dicas não seleciona texto nem abre o menu do navegador */
+  @media (hover:none){
+    .chart,.chart *,.donut,.donut *,.leg,.leg *,.pill,.info,span[data-tip],.badge-moeda,.mc span{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+    [data-tip]{-webkit-tap-highlight-color:transparent}
+  }
   .donut .ct1{fill:var(--muted);font-size:11px;font-weight:700;letter-spacing:.1em;text-anchor:middle}
   .donut .ct2{fill:var(--ink);font-size:20px;font-weight:800;text-anchor:middle}
   .pie-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
@@ -2411,32 +2424,73 @@ function rotularTabelas(){
 
 /* tooltip */
 const tipEl = document.getElementById('tip');
-function esconderTip(){ tipEl.hidden = true; }
-document.addEventListener('pointermove', e => {
-  const t = e.target.closest && e.target.closest('[data-tip]');
-  if (!t || !t.dataset.tip) { if (!tipEl.hidden) esconderTip(); return; }
+let tipFonte = null;
+/* mostra a dica do elemento t perto de (cx, cy): no mouse ao lado do cursor; no toque acima do dedo, para o dedo não cobrir */
+function mostrarTip(t, cx, cy, toque){
+  if (tipFonte !== t) { if (tipFonte) tipFonte.classList.remove('tipon'); tipFonte = t; t.classList.add('tipon'); }
   if (tipEl._src !== t) { tipEl.innerHTML = t.dataset.tip; tipEl._src = t; }
   tipEl.hidden = false;
-  const r = tipEl.getBoundingClientRect(), pad = 14;
-  let x = e.clientX + pad, y = e.clientY + pad;
-  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - pad;
-  if (y + r.height > innerHeight - 8) y = e.clientY - r.height - pad;
-  tipEl.style.left = Math.max(8, x) + 'px'; tipEl.style.top = Math.max(8, y) + 'px';
-});
-document.addEventListener('pointerleave', esconderTip);
-/* no toque (celular), tocar num gráfico ou num item com dica mostra o tooltip por alguns segundos */
-let tipToque = null;
-document.addEventListener('pointerdown', e => {
-  if (e.pointerType !== 'touch') return;
-  const t = e.target.closest && e.target.closest('[data-tip]');
-  if (!t || !t.dataset.tip || e.target.closest('input, select')) { esconderTip(); return; }
-  tipEl.innerHTML = t.dataset.tip; tipEl._src = t; tipEl.hidden = false;
   const r = tipEl.getBoundingClientRect();
-  let x = Math.min(Math.max(8, e.clientX - r.width / 2), innerWidth - r.width - 8), y = e.clientY - r.height - 18;
-  if (y < 8) y = e.clientY + 22;
+  let x, y;
+  if (toque) {
+    x = Math.min(Math.max(8, cx - r.width / 2), innerWidth - r.width - 8);
+    y = cy - r.height - 30; if (y < 8) y = cy + 30;
+  } else {
+    const pad = 14; x = cx + pad; y = cy + pad;
+    if (x + r.width > innerWidth - 8) x = cx - r.width - pad;
+    if (y + r.height > innerHeight - 8) y = cy - r.height - pad;
+    x = Math.max(8, x); y = Math.max(8, y);
+  }
   tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
-  clearTimeout(tipToque); tipToque = setTimeout(esconderTip, 3200);
-}, true);
+}
+function esconderTip(){
+  tipEl.hidden = true; tipEl._src = null;
+  if (tipFonte) { tipFonte.classList.remove('tipon'); tipFonte = null; }
+}
+/* mouse: a dica acompanha o cursor */
+document.addEventListener('pointermove', e => {
+  if (e.pointerType === 'touch') return;
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (!t || !t.dataset.tip) { if (!tipEl.hidden) esconderTip(); return; }
+  mostrarTip(t, e.clientX, e.clientY, false);
+});
+document.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') esconderTip(); });
+/* toque (celular): um toque numa área com dica abre e deixa aberta; tocar fora fecha.
+   Tocar, segurar e arrastar: a dica segue o dedo (e a página não rola enquanto isso).
+   Botões, campos e chips não abrem dica no toque: o toque neles é uma ação. */
+const alvoTip = el => {
+  if (!el || !el.closest || el.closest('button, input, select, textarea, label, a, #dlg')) return null;
+  const t = el.closest('[data-tip]');
+  return t && t.dataset.tip ? t : null;
+};
+const toque = {t:null, x:0, y:0, timer:null, arrastando:false, rolou:false};
+document.addEventListener('touchstart', e => {
+  clearTimeout(toque.timer);
+  if (e.touches.length > 1) { toque.t = null; esconderTip(); return; }
+  const p = e.touches[0], t = alvoTip(e.target);
+  Object.assign(toque, {t, x:p.clientX, y:p.clientY, arrastando:false, rolou:false});
+  if (!t) { esconderTip(); return; }
+  mostrarTip(t, p.clientX, p.clientY, true);
+  toque.timer = setTimeout(() => { if (toque.t && !toque.rolou) toque.arrastando = true; }, 220);
+}, {passive:true});
+document.addEventListener('touchmove', e => {
+  if (!toque.t) return;
+  const p = e.touches[0];
+  if (toque.arrastando) {
+    if (e.cancelable) e.preventDefault();
+    const t = alvoTip(document.elementFromPoint(p.clientX, p.clientY));
+    mostrarTip(t || tipFonte || toque.t, p.clientX, p.clientY, true);   // fora de uma área com dica, mantém a última
+    return;
+  }
+  // mexeu antes de segurar: é rolagem da página, a dica fecha
+  if (Math.hypot(p.clientX - toque.x, p.clientY - toque.y) > 10) { toque.rolou = true; toque.t = null; clearTimeout(toque.timer); esconderTip(); }
+}, {passive:false});
+const fimToque = () => { clearTimeout(toque.timer); toque.t = null; toque.arrastando = false; };
+document.addEventListener('touchend', fimToque, {passive:true});
+document.addEventListener('touchcancel', fimToque, {passive:true});
+/* segurar em cima de uma dica não abre o menu do navegador (copiar, selecionar…) */
+document.addEventListener('contextmenu', e => { if (matchMedia('(hover: none)').matches && alvoTip(e.target)) e.preventDefault(); });
+window.addEventListener('resize', esconderTip);
 
 /* adia o render enquanto o mouse está pressionado, para não "engolir" cliques */
 let mouseDown = false, renderPendente = false;
@@ -2957,7 +3011,11 @@ async function nuvem(acao, extra = {}, alvo = SY){
   let j;
   try { j = await r.json(); }
   catch (e) { throw new Error('O script não respondeu como esperado. Confira se ele tem o código novo e foi implantado como "Qualquer pessoa".'); }
-  if (j && j.erro) throw new Error(j.erro);
+  if (j && j.erro) {
+    // o script foi atualizado num projeto antigo e o Google não pediu a permissão do Drive
+    if (/DriveApp|auth\/drive|permiss/i.test(j.erro)) throw new Error('O script ainda não tem permissão para usar o seu Drive. Em script.google.com, abra o script, escolha a função "autorizar" ao lado de "Depuração", clique em Executar e marque todas as permissões, inclusive a do Google Drive. Depois toque em Sincronizar agora.');
+    throw new Error(j.erro);
+  }
   return j;
 }
 
