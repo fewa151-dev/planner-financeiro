@@ -56,8 +56,18 @@
   .shell{display:grid;grid-template-columns:92px minmax(0,1fr);min-height:100vh}
   .rail{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 0;
         border-right:1px solid var(--line);background:rgba(6,9,21,.6);backdrop-filter:blur(8px)}
-  .brand{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;margin-bottom:18px;
-         background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 22px rgba(91,95,245,.5);font-weight:800}
+  /* perfil: inicial da conta Google conectada (ou P) com a bolinha da sincronização */
+  .perfil{position:relative;flex:none;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;margin-bottom:18px;border:0;cursor:pointer;color:#fff;
+          background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 22px rgba(91,95,245,.5);font-weight:800;font-size:16px}
+  .perfil i{position:absolute;right:-3px;bottom:-3px;width:13px;height:13px;border-radius:50%;border:2.5px solid var(--bg);display:none}
+  .perfil[data-st=ok] i{display:block;background:var(--pos)}
+  .perfil[data-st=pendente] i,.perfil[data-st=enviando] i,.perfil[data-st=verificando] i{display:block;background:#fbbf24;animation:pulsa 1s ease-in-out infinite}
+  .perfil[data-st=offline] i{display:block;background:#7c85ad}
+  .perfil[data-st=erro] i,.perfil[data-st=conflito] i{display:block;background:var(--neg)}
+  .perfil.mob{display:none}
+  .opcs.vers{max-height:46vh;overflow:auto;padding-right:2px}
+  .linkbox{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .linkbox .f{flex:1 1 220px;font-size:12.5px!important}
   .nav{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;padding:8px 0;border:0;background:none;cursor:pointer;color:var(--muted)}
   .nav .ico{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);transition:.15s}
   .nav span{font-size:10.5px;font-weight:600}
@@ -379,7 +389,10 @@
           padding:6px 4px calc(6px + env(safe-area-inset-bottom));border-right:0;border-top:1px solid var(--line);z-index:30;
           overflow-x:auto;scrollbar-width:none;background:rgba(6,9,21,.94);backdrop-filter:blur(14px)}
     .rail::-webkit-scrollbar{display:none}
-    .brand{display:none}
+    .rail .perfil{display:none}
+    .phead{position:relative}
+    .phead>div:first-of-type{padding-right:46px}
+    .perfil.mob{display:grid;position:absolute;top:0;right:0;width:36px;height:36px;border-radius:12px;margin:0;font-size:14px}
     .nav{flex:none;width:68px;padding:2px 0}
     .nav .ico{width:36px;height:36px}
     .nav span{font-size:10px}
@@ -1242,7 +1255,7 @@ function kpi(rotulo, valor, sub, icone, {hero = false, cls = ''} = {}){
   return `<div class="card kpi${hero ? ' hero' : ''}"><div class="lbl"><span class="badge">${ico(icone)}</span>${rotulo}</div><div class="val ${cls}">${valor}</div><div class="sub">${sub}</div></div>`;
 }
 function pageHead(eyebrow, titulo, direita = ''){
-  return `<div class="phead"><div><div class="eyebrow">${eyebrow}</div><h1>${titulo}</h1></div><div class="acts">${direita}</div></div>`;
+  return `<div class="phead"><div><div class="eyebrow">${eyebrow}</div><h1>${titulo}</h1></div><div class="acts">${direita}</div>${perfilHTML('mob')}</div>`;
 }
 const seg = (act, atual, opcoes) => `<div class="seg">${opcoes.map(([v, l]) => `<button data-act="${act}" data-arg="${v}" class="${atual === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
 /* períodos dos gráficos de rendimento: Máx mostra tudo; o padrão é 12M */
@@ -2160,7 +2173,7 @@ function cardApp(){
            <span class="muted">Android (Chrome)</span><span>menu ⋮ → Instalar app</span>
            <span class="muted">iPhone (Safari)</span><span>Compartilhar → Adicionar à Tela de Início</span>
          </div>`;
-  return card('App', corpo, {dica:'O app instalado usa os mesmos dados deste endereço. A sincronização entre aparelhos vem com o login do Google.'});
+  return card('App', corpo, {dica:'O app instalado usa os mesmos dados deste endereço. Para ter os mesmos dados em outros aparelhos, ligue a sincronização com o Google Drive.'});
 }
 function cardCotacoes(){
   const ext = String(S.config.cotacoesUrl || '').trim();
@@ -2168,7 +2181,7 @@ function cardCotacoes(){
     : API_LOCAL != null ? '<span style="font-weight:700">Usando o servidor do PC (server.py)</span>'
     : '<span class="neg" style="font-weight:700">Nenhum serviço configurado neste aparelho</span>';
   return card('Serviço de cotações', `
-    <p class="hint">Ações, câmbio e índices vêm do Yahoo Finance por um intermediário. No PC, o <b>Abrir Planner.bat</b> já resolve. No celular e no app publicado, use um <b>Google Apps Script</b> gratuito: o código e o passo a passo estão no arquivo <code>cotacoes-apps-script.gs</code>, na pasta do planner.</p>
+    <p class="hint">Ações, câmbio e índices vêm do Yahoo Finance por um intermediário. No PC, o <b>Abrir Planner.bat</b> já resolve. No celular e no app publicado, use o script do planner na sua conta Google (<code>planner-apps-script.gs</code>): é o mesmo da sincronização, e ao conectar a sincronização este endereço é preenchido sozinho.</p>
     <div class="kv" style="grid-template-columns:auto 1fr"><span class="muted">Situação</span><span>${situacao}</span></div>
     <label style="display:grid;gap:4px;margin-top:12px;font-size:12px;font-weight:700;color:var(--muted)">Endereço do Apps Script (termina em /exec)
       <input class="f" type="text" data-set="cfg::cotacoesUrl" value="${esc(ext)}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" style="border-color:var(--line2);background:var(--field)"></label>
@@ -2196,9 +2209,12 @@ function vConfig(){
           <span class="muted">Dia do pagamento</span><span>${inNum('cfg::diaPagamento', S.config.diaPagamento, {cls:'sm lock'})}</span>
           <span class="muted">Mês em edição</span><span>${inMes('cfg::mesAtual', S.config.mesAtual, {cls:'lock', w:110})}</span>
         </div><p class="hint" style="margin:14px 0 0">O mês em edição avança sozinho ao fechar um mês. Mude aqui só para corrigir.</p>`)}
+      <div id="cardSync">${cardSync()}</div>
       ${cardApp()}
       ${cardCotacoes()}
-      ${card('Dados', `<p class="hint">Tudo fica salvo neste navegador, neste aparelho. Exporte um backup de vez em quando: limpar os dados do navegador apaga o planner.</p>
+      ${card('Dados', `<p class="hint">${syncLigado()
+          ? 'Os dados ficam neste aparelho e no seu Google Drive, com uma cópia por dia na pasta Versões. O backup em arquivo continua disponível.'
+          : 'Tudo fica salvo neste navegador, neste aparelho. Exporte um backup de vez em quando (ou ligue a sincronização com o Google Drive): limpar os dados do navegador apaga o planner.'}</p>
         <div class="cf"><button class="btn" data-act="export">Exportar backup</button><button class="btn" data-act="import">Importar backup</button></div>
         <div class="cf"><button class="btn danger" data-act="reset" data-arg="vazio">Começar do zero</button></div>`)}
     </div>`;
@@ -2284,7 +2300,7 @@ function render(){
   focoPendente = null;
   CH = {}; chN = 0; memoRes = {}; memoCron = {};
   if (mpAlvo) fecharSeletorMes();   // o campo vai ser recriado; se o foco voltar a ele, o seletor reabre
-  document.getElementById('rail').innerHTML = `<div class="brand">P</div>` + TABS.map(([k, l]) =>
+  document.getElementById('rail').innerHTML = perfilHTML() + TABS.map(([k, l]) =>
     `<button class="nav${S.ui.tab === k ? ' on' : ''}" data-act="tab" data-arg="${k}"><span class="ico">${ico(k)}</span><span>${l}</span></button>`).join('');
   const view = (TABS.find(t => t[0] === S.ui.tab) || TABS[0])[2];
   app.innerHTML = view() + (semStorage ? '<div class="warn">Não foi possível salvar neste navegador (armazenamento bloqueado). Use “Exportar backup” para não perder os dados.</div>' : '');
@@ -2431,7 +2447,7 @@ function agendar(){
   renderPendente = false;
   setTimeout(render, 0);
 }
-function commit(){ memoCron = {}; memoRes = {}; salvar(); agendar(); }
+function commit(){ memoCron = {}; memoRes = {}; salvar(); agendar(); marcarMudanca(); }
 
 /* ============================================================
    Edição (delegação de eventos)
@@ -2728,9 +2744,10 @@ document.addEventListener('click', e => {
     case 'export': return exportar();
     case 'import': return document.getElementById('fileImp').click();
     case 'reset':
-      pedir({titulo:'Começar do zero?', html:'<p>Todos os dados serão apagados deste aparelho.</p><div class="nota">Isso não pode ser desfeito. Exporte um backup antes, se quiser guardar o que tem hoje.</div>',
-             ok:'Apagar tudo', perigo:true})
-        .then(ok => { if (!ok) return; S = migrar(estadoVazio()); commit(); });
+      pedir({titulo:'Começar do zero?', ok:'Apagar tudo', perigo:true, html: syncLigado()
+               ? '<p>Todos os dados serão apagados deste aparelho e do Google Drive (e dos outros aparelhos conectados).</p><div class="nota">Uma cópia do que existe hoje fica guardada na pasta Versões do Drive.</div>'
+               : '<p>Todos os dados serão apagados deste aparelho.</p><div class="nota">Isso não pode ser desfeito. Exporte um backup antes, se quiser guardar o que tem hoje.</div>'})
+        .then(async ok => { if (!ok) return; await copiaDeSeguranca('antes de começar do zero'); S = migrar(estadoVazio()); commit(); });
       return;
   }
 });
@@ -2890,11 +2907,367 @@ document.getElementById('fileImp').addEventListener('change', e => {
     const d = JSON.parse(t);
     if (!d || !Array.isArray(d.ganhos) || !Array.isArray(d.parcelas)) throw new Error('formato');
     return pedir({titulo:'Importar backup?', html:'<p>Todos os dados atuais serão substituídos pelo backup.</p>', ok:'Importar', perigo:true})
-      .then(ok => { if (!ok) return; const snap = JSON.stringify(S); S = migrar(d); avisar('Backup importado', {desfazer: snap}); commit(); });
+      .then(async ok => { if (!ok) return; await copiaDeSeguranca('antes de importar backup'); const snap = JSON.stringify(S); S = migrar(d); avisar('Backup importado', {desfazer: snap}); commit(); });
   }).catch(() => avisar('Arquivo inválido: não parece um backup do Planner Financeiro.', {erro:true}));
 });
 
+/* ============================================================
+   Sincronização pelo Google Drive
+   O script do planner (planner-apps-script.gs), publicado na conta Google do usuário, guarda os dados
+   num arquivo do Drive. Cada mudança é enviada na hora; as dos outros aparelhos chegam ao abrir o app,
+   ao voltar para ele e a cada minuto. "rev" é a versão: se a nuvem andou e este aparelho também, há conflito.
+   ============================================================ */
+const SYNC_KEY = 'planner-sync-v1';
+const SITE = 'https://fewa151-dev.github.io/planner-financeiro/';
+/* fica só neste aparelho: endereço do script, chave, versão (rev) que este aparelho tem e se há mudança por enviar */
+let SY = (() => { try { return JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; } catch (e) { return {}; } })();
+const salvarSY = () => { try { localStorage.setItem(SYNC_KEY, JSON.stringify(SY)); } catch (e) {} };
+const syncLigado = () => !!(SY.url && SY.chave);
+const sy = {estado: syncLigado() ? 'verificando' : 'off', msg:'', enviando:false, buscando:false, perguntando:false, denovo:false, tEnvio:null};
+const ROT_SYNC = {off:'Desligada', verificando:'Verificando…', ok:'Sincronizado', pendente:'Mudanças por enviar', enviando:'Enviando…',
+                  offline:'Sem conexão', erro:'Erro na sincronização', conflito:'Mudanças em dois aparelhos'};
+
+const nomeAparelho = () => SY.aparelho || (/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) ? 'Celular' : 'Computador');
+const dataHora = x => new Date(x).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+/* hash curto do conteúdo (cyrb53): diz se há mudança que a nuvem ainda não tem */
+function hashTxt(str){
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+/* vai para a nuvem tudo, menos o estado de tela deste aparelho (aba aberta, painéis, períodos…); as cores dos gráficos vão junto */
+const dadosNuvem = () => ({...S, ui:{cores:S.ui.cores}});
+const hashLocal = () => hashTxt(JSON.stringify(dadosNuvem()));
+function aplicarNuvem(d){
+  S = migrar({...d, ui:{...S.ui, cores:{...S.ui.cores, ...((d.ui && d.ui.cores) || {})}}});
+  memoCron = {}; memoRes = {}; salvar();
+  SY.hash = hashLocal(); SY.pendente = false;
+}
+const temDados = () => !!(S.ganhos.length || S.parcelas.length || S.reserva.ativos.length || S.invAtivos.length || S.bens.length
+                          || S.caixa.length || Object.keys(S.historico).length);
+
+async function nuvem(acao, extra = {}, alvo = SY){
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 40000);
+  let r;
+  try { r = await fetch(alvo.url, {method:'POST', body:JSON.stringify({acao, chave:alvo.chave, ...extra}), signal:ctl.signal}); }
+  catch (e) { throw Object.assign(new Error(navigator.onLine === false ? 'Sem internet: as mudanças ficam guardadas e vão quando a conexão voltar.' : 'Sem resposta do script do Google.'), {rede:true}); }
+  finally { clearTimeout(t); }
+  let j;
+  try { j = await r.json(); }
+  catch (e) { throw new Error('O script não respondeu como esperado. Confira se ele tem o código novo e foi implantado como "Qualquer pessoa".'); }
+  if (j && j.erro) throw new Error(j.erro);
+  return j;
+}
+
+function tituloPerfil(){ return syncLigado() ? `${SY.conta || 'Google Drive'} · ${ROT_SYNC[sy.estado]}` : 'Conectar ao Google Drive'; }
+function perfilHTML(cls = ''){
+  const ini = syncLigado() && SY.conta ? SY.conta[0].toUpperCase() : 'P';
+  return `<button type="button" class="perfil ${cls}" data-act="perfil" data-st="${sy.estado}" title="${esc(tituloPerfil())}" aria-label="${esc(tituloPerfil())}">${esc(ini)}<i></i></button>`;
+}
+function sitHTML(){
+  const c = {ok:'pos', erro:'neg', conflito:'neg'}[sy.estado] || '';
+  return `<span class="${c}" style="font-weight:700">${esc(ROT_SYNC[sy.estado])}</span>${sy.msg ? `<div class="hint" style="margin:2px 0 0">${esc(sy.msg)}</div>` : ''}`;
+}
+/* muda a bolinha do perfil e o card de Ajustes sem redesenhar a página (não atrapalha quem está digitando) */
+function estadoSync(e, msg = ''){
+  const antes = sy.estado; sy.estado = e; sy.msg = msg;
+  document.querySelectorAll('.perfil').forEach(el => { el.dataset.st = e; el.title = tituloPerfil(); el.setAttribute('aria-label', tituloPerfil()); });
+  const sit = document.getElementById('syncSit'); if (sit) sit.innerHTML = sitHTML();
+  const q = document.getElementById('syncQuando'); if (q && SY.ultima) q.textContent = dataHora(SY.ultima);
+  if (S.ui.tab === 'config' && (antes === 'conflito') !== (e === 'conflito')) agendarFundo();
+}
+
+/* chamado a cada commit(): se o conteúdo mudou (não só a tela), envia em seguida */
+function marcarMudanca(){
+  if (!syncLigado()) return;
+  if (hashLocal() === SY.hash) return;
+  SY.pendente = true; salvarSY();
+  if (sy.estado === 'conflito') return;
+  estadoSync('pendente');
+  clearTimeout(sy.tEnvio); sy.tEnvio = setTimeout(enviarNuvem, 1500);
+}
+
+async function enviarNuvem({forcar = false} = {}){
+  if (!syncLigado() || (sy.estado === 'conflito' && !forcar)) return;
+  if (sy.enviando) { sy.denovo = true; return; }
+  if (!SY.pendente && !forcar) return;
+  clearTimeout(sy.tEnvio);
+  sy.enviando = true; estadoSync('enviando');
+  const dados = dadosNuvem(), h = hashTxt(JSON.stringify(dados));
+  let conf = null;
+  try {
+    const r = await nuvem('enviar', {baseRev:SY.rev || 0, dispositivo:nomeAparelho(), hash:h, dados, forcar});
+    if (r.conflito) conf = r;
+    else {
+      SY.rev = r.rev; SY.atualizado = r.atualizado; SY.ultima = Date.now(); SY.hash = h;
+      SY.pendente = hashLocal() !== h; salvarSY();
+      estadoSync(SY.pendente ? 'pendente' : 'ok');
+    }
+  } catch (e) { estadoSync(e.rede ? 'offline' : 'erro', e.message); }
+  finally { sy.enviando = false; }
+  if (conf) return conflito(conf);
+  if (sy.denovo || (SY.pendente && sy.estado === 'pendente')) { sy.denovo = false; sy.tEnvio = setTimeout(enviarNuvem, 800); }
+}
+
+/* espera o usuário terminar o que está fazendo (campo em foco, diálogo aberto, clique) antes de trocar os dados da tela */
+function ocupado(){
+  const a = document.activeElement;
+  return dlg.open || mouseDown || !!(a && app.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
+}
+async function esperarLivre(){ for (let i = 0; i < 90 && ocupado(); i++) await new Promise(r => setTimeout(r, 1000)); }
+
+async function buscarNuvem({avisarOk = false} = {}){
+  if (!syncLigado() || sy.enviando || sy.buscando || sy.perguntando) return;
+  if (sy.estado === 'conflito') { if (avisarOk) resolverConflito(); return; }
+  sy.buscando = true;
+  let proximo = null;
+  try {
+    if (sy.estado !== 'pendente' && sy.estado !== 'ok') estadoSync('verificando');
+    const info = await nuvem('info');
+    if (info.conta && info.conta !== SY.conta) { SY.conta = info.conta; salvarSY(); }
+    // um envio feito ao fechar o app chegou, mas a resposta não: a nuvem já tem exatamente o que está aqui
+    if (info.rev !== (SY.rev || 0) && info.hash && info.hash === hashLocal()) { SY.rev = info.rev; SY.hash = info.hash; SY.pendente = false; salvarSY(); }
+    if (!info.rev) { SY.rev = 0; SY.pendente = true; salvarSY(); proximo = 'enviar'; }
+    else if (info.rev === (SY.rev || 0)) {
+      SY.ultima = Date.now(); salvarSY();
+      if (SY.pendente) proximo = 'enviar';
+      else { estadoSync('ok'); if (avisarOk) avisar('Tudo sincronizado'); }
+    }
+    else if (SY.pendente) proximo = info;   // os dois lados mudaram
+    else {
+      const r = await nuvem('baixar');
+      await esperarLivre();
+      if (SY.pendente) proximo = r;
+      else if (r.dados) {
+        aplicarNuvem(r.dados); SY.rev = r.rev; SY.atualizado = r.atualizado; SY.ultima = Date.now(); salvarSY();
+        estadoSync('ok'); agendar();
+        avisar(`Dados atualizados com as mudanças de ${r.dispositivo || 'outro aparelho'}`);
+      }
+    }
+  } catch (e) { estadoSync(e.rede ? 'offline' : 'erro', e.message); }
+  finally { sy.buscando = false; }
+  if (proximo === 'enviar') return enviarNuvem();
+  if (proximo) return conflito(proximo);
+}
+
+/* os dois aparelhos mudaram desde a última sincronização: o usuário escolhe qual versão fica (a outra vai para Versões no Drive) */
+async function conflito(r){
+  if (r.hash && r.hash === hashLocal()) {   // a nuvem já tem o que está aqui (envio repetido)
+    SY.rev = r.rev; SY.hash = r.hash; SY.pendente = false; salvarSY(); estadoSync('ok'); return;
+  }
+  estadoSync('conflito');
+  if (sy.perguntando) return;
+  sy.perguntando = true;
+  try {
+    await esperarLivre();
+    const quem = r.dispositivo ? ` do aparelho <b>${esc(r.dispositivo)}</b>` : '';
+    const esc1 = await pedir({titulo:'Mudanças em dois aparelhos', ok:'Continuar', coletar:true, html:`
+      <p>Este aparelho tem mudanças que ainda não foram para o Drive, e o Drive recebeu outras${quem}${r.atualizado ? ` em ${dataHora(r.atualizado)}` : ''}. Qual versão fica?</p>
+      <div class="opcs">
+        <label class="opc"><input type="radio" name="v" value="nuvem" checked><span><b>Usar os dados do Drive</b><small>As mudanças deste aparelho ficam guardadas numa cópia na pasta Versões do Drive.</small></span></label>
+        <label class="opc"><input type="radio" name="v" value="local"><span><b>Manter os deste aparelho</b><small>Substituem os do Drive. A versão do Drive fica guardada na pasta Versões.</small></span></label>
+      </div>`});
+    if (!esc1) { estadoSync('conflito', 'Sincronização pausada. Em Ajustes → Sincronização, toque em Resolver.'); return; }
+    if (esc1.v === 'local') { SY.pendente = true; sy.estado = 'pendente'; sy.perguntando = false; return enviarNuvem({forcar:true}); }
+    estadoSync('enviando');
+    await nuvem('guardarVersao', {dados:dadosNuvem(), motivo:'mudanças não enviadas', dispositivo:nomeAparelho()});
+    const d = await nuvem('baixar');
+    aplicarNuvem(d.dados); SY.rev = d.rev; SY.atualizado = d.atualizado; SY.ultima = Date.now(); salvarSY();
+    estadoSync('ok'); agendar(); avisar('Dados do Drive aplicados');
+  } catch (e) { estadoSync(e.rede ? 'offline' : 'erro', e.message); }
+  finally { sy.perguntando = false; }
+}
+async function resolverConflito(){
+  try { const info = await nuvem('info'); sy.estado = 'pendente'; await conflito(info); }
+  catch (e) { estadoSync(e.rede ? 'offline' : 'erro', e.message); }
+}
+
+function chaveNova(){
+  const b = crypto.getRandomValues(new Uint8Array(24));
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+/* liga este aparelho ao script: o 1º aparelho registra uma chave nova; os outros chegam pelo link (endereço + chave) */
+async function conectarNuvem(url, chave){
+  url = String(url || '').trim();
+  if (!/^https:\/\/script\.google(usercontent)?\.com\/\S+$/.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/\S*$/.test(url)) {
+    return avisar('Cole o endereço do script: começa com https://script.google.com/ e termina em /exec.', {erro:true});
+  }
+  chave = chave || chaveNova();
+  avisar('Conectando…');
+  let info;
+  try { info = await nuvem('registrar', {}, {url, chave}); }
+  catch (e) { return avisar(e.message, {erro:true}); }
+  const antes = SY;
+  SY = {url, chave, conta:info.conta || '', aparelho:antes.aparelho, rev:0, pendente:false, hash:''};
+  salvarSY();
+  try {
+    if (!info.rev) { SY.pendente = true; await enviarNuvem(); }
+    else {
+      let usar = 'nuvem';
+      if (temDados()) {
+        const r = await pedir({titulo:'Já existem dados no Drive', ok:'Continuar', coletar:true, html:`
+          <p>O Drive já tem dados do planner${info.dispositivo ? `, enviados pelo aparelho <b>${esc(info.dispositivo)}</b>` : ''}${info.atualizado ? ` em ${dataHora(info.atualizado)}` : ''}. E os dados deste aparelho?</p>
+          <div class="opcs">
+            <label class="opc"><input type="radio" name="v" value="nuvem" checked><span><b>Usar os dados do Drive</b><small>O certo para um aparelho novo. Os dados atuais daqui ficam guardados numa cópia na pasta Versões.</small></span></label>
+            <label class="opc"><input type="radio" name="v" value="local"><span><b>Enviar os deste aparelho</b><small>Substituem os do Drive. A versão do Drive fica guardada na pasta Versões.</small></span></label>
+          </div>`});
+        if (!r) { SY = {aparelho:antes.aparelho}; salvarSY(); estadoSync('off'); agendar(); return avisar('Conexão cancelada.'); }
+        usar = r.v;
+      }
+      if (usar === 'local') { SY.rev = info.rev; SY.pendente = true; salvarSY(); await enviarNuvem({forcar:true}); }
+      else {
+        if (temDados()) await nuvem('guardarVersao', {dados:dadosNuvem(), motivo:'antes de conectar', dispositivo:nomeAparelho()});
+        const d = await nuvem('baixar');
+        aplicarNuvem(d.dados); SY.rev = d.rev; SY.atualizado = d.atualizado; SY.ultima = Date.now(); salvarSY();
+        estadoSync('ok');
+      }
+    }
+  } catch (e) { estadoSync(e.rede ? 'offline' : 'erro', e.message); }
+  // o mesmo script também busca as cotações
+  if (!String(S.config.cotacoesUrl || '').trim()) { S.config.cotacoesUrl = url; M.erros = {}; mkt.tentativa = 0; mkt.offline = false; commit(); atualizarCotacoes(true); }
+  agendar();
+  avisar(`Conectado ao Google Drive${SY.conta ? ' de ' + SY.conta : ''}`);
+}
+
+/* link para conectar outro aparelho: leva o endereço e a chave (quem tiver o link acessa os dados) */
+const b64url = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function linkConexao(){
+  const publicado = location.protocol === 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const base = publicado ? location.origin + location.pathname.replace(/index\.html$/, '') : SITE;
+  return base + '#conectar=' + b64url(JSON.stringify({u:SY.url, k:SY.chave}));
+}
+function mostrarLink(){
+  const link = linkConexao();
+  pedir({titulo:'Conectar outro aparelho', ok:'Fechar', html:`
+    <p>Abra este link no outro aparelho (celular, outro PC). Ele conecta o planner de lá ao seu Google Drive, sem repetir a configuração.</p>
+    <div class="linkbox"><input class="f" type="text" readonly value="${esc(link)}" id="linkCon">
+      <button type="button" class="btn" data-act="copiarLink">Copiar</button>${navigator.share ? '<button type="button" class="btn" data-act="partilharLink">Enviar…</button>' : ''}</div>
+    <div class="nota">Quem tiver este link consegue ver e mudar seus dados. Mande só para você mesmo (por exemplo, no seu próprio WhatsApp).</div>`});
+}
+function lerLinkConexao(){
+  const m = location.hash.match(/^#conectar=([\w-]+)/); if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  let o;
+  try { o = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/'))))); }
+  catch (e) { return avisar('Link de conexão inválido.', {erro:true}); }
+  if (!o || !o.u || !o.k) return avisar('Link de conexão inválido.', {erro:true});
+  if (SY.url === o.u && SY.chave === o.k) return avisar('Este aparelho já está conectado.');
+  pedir({titulo:'Conectar este aparelho?', ok:'Conectar', html:'<p>Este aparelho vai usar os dados do planner guardados no seu Google Drive e sincronizar as mudanças com os outros aparelhos.</p>'})
+    .then(ok => { if (ok) conectarNuvem(o.u, o.k); });
+}
+
+async function versoesNuvem(){
+  avisar('Buscando versões…');
+  let r;
+  try { r = await nuvem('versoes'); } catch (e) { return avisar(e.message, {erro:true}); }
+  toastEl.hidden = true;
+  if (!r.versoes.length) return avisar('Ainda não há versões guardadas. A primeira cópia diária aparece amanhã.');
+  const nomeV = n => {
+    const m = n.match(/^(\d{4})-(\d{2})-(\d{2})(?: (\d{2})-(\d{2}) (.*))?$/); if (!m) return n;
+    return m[4] ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]} · ${m[6]}` : `${m[3]}/${m[2]}/${m[1]} · início do dia`;
+  };
+  const esc2 = await pedir({titulo:'Versões guardadas no Drive', ok:'Restaurar', perigo:true, coletar:true, html:`
+    <p>Uma cópia por dia (como os dados estavam no início do dia) e cópias feitas antes de substituições. Ao restaurar, os dados atuais também ficam guardados.</p>
+    <div class="opcs vers">${r.versoes.map((v, i) => `<label class="opc"><input type="radio" name="id" value="${esc(v.id)}"${i ? '' : ' checked'}><span><b>${esc(nomeV(v.nome))}</b><small>${Math.max(1, Math.round(v.tamanho / 1024))} KB</small></span></label>`).join('')}</div>`});
+  if (!esc2 || !esc2.id) return;
+  try {
+    avisar('Restaurando…');
+    const v = await nuvem('versao', {id:esc2.id});
+    await nuvem('guardarVersao', {dados:dadosNuvem(), motivo:'antes de restaurar', dispositivo:nomeAparelho()});
+    const snap = JSON.stringify(S);
+    aplicarNuvem(v.dados); SY.pendente = true; salvarSY();
+    await enviarNuvem({forcar:true});
+    agendar(); avisar('Versão restaurada', {desfazer:snap});
+  } catch (e) { avisar(e.message, {erro:true}); }
+}
+/* antes de apagar tudo ou importar um backup, guarda uma cópia no Drive */
+async function copiaDeSeguranca(motivo){
+  if (!syncLigado()) return;
+  try { await nuvem('guardarVersao', {dados:dadosNuvem(), motivo, dispositivo:nomeAparelho()}); } catch (e) {}
+}
+
+function cardSync(){
+  const ajuda = '<a class="lnk" href="https://github.com/fewa151-dev/planner-financeiro/blob/main/planner-apps-script.gs" target="_blank" rel="noopener">planner-apps-script.gs</a>';
+  if (!syncLigado()) return card('Sincronização · Google Drive', `
+    <p class="hint">Guarde os dados no seu Google Drive e use o planner no PC e no celular com os mesmos dados: o que muda num aparelho aparece nos outros.</p>
+    <p class="hint">No primeiro aparelho, publique uma vez o script do planner na sua conta Google (código e passo a passo em ${ajuda}) e cole o endereço dele aqui. Nos outros aparelhos, use o link de <b>Conectar outro aparelho</b>, que aparece aqui depois de conectar o primeiro.</p>
+    <label style="display:grid;gap:4px;margin-top:4px;font-size:12px;font-weight:700;color:var(--muted)">Endereço do script (termina em /exec)
+      <input class="f" id="syncUrl" type="text" value="${esc(S.config.cotacoesUrl || '')}" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" style="border-color:var(--line2);background:var(--field)"></label>
+    <div class="cf"><button class="btn primary" data-act="syncConectar">Conectar</button></div>`,
+    {dica:'Os dados ficam num arquivo da pasta “Planner Financeiro” do seu Drive, com uma cópia por dia na pasta “Versões”. O script é seu e roda na sua conta.'});
+  return card('Sincronização · Google Drive', `
+    <div class="kv" style="grid-template-columns:auto 1fr;align-items:center">
+      <span class="muted">Conta</span><span style="font-weight:700;overflow-wrap:anywhere">${esc(SY.conta || '—')}</span>
+      <span class="muted">Situação</span><span id="syncSit">${sitHTML()}</span>
+      <span class="muted">Última sincronização</span><span id="syncQuando">${SY.ultima ? dataHora(SY.ultima) : '—'}</span>
+      <span class="muted">Este aparelho</span><span><input class="f" id="syncNome" type="text" value="${esc(nomeAparelho())}" maxlength="30" style="max-width:220px;border-color:var(--line2);background:var(--field)"></span>
+    </div>
+    <div class="cf">${sy.estado === 'conflito' ? '<button class="btn primary" data-act="syncResolver">Resolver</button>' : ''}
+      <button class="btn" data-act="syncAgora">Sincronizar agora</button><button class="btn" data-act="syncLink">Conectar outro aparelho</button>
+      <button class="btn" data-act="syncVersoes">Versões</button><button class="btn danger" data-act="syncSair">Desconectar</button></div>`,
+    {dica:'Os dados ficam num arquivo da pasta “Planner Financeiro” do seu Drive, com uma cópia por dia na pasta “Versões”. Cada mudança vai na hora; as dos outros aparelhos chegam ao abrir o app e a cada minuto.'});
+}
+
+/* ações da sincronização (os botões usam data-act, como o resto do app) */
+document.addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  switch (b.dataset.act) {
+    case 'perfil':
+      if (S.ui.tab !== 'config') { S.ui.tab = 'config'; animarAba = true; window.scrollTo(0, 0); commit(); }
+      setTimeout(() => { const c = document.getElementById('cardSync'); if (c) c.scrollIntoView({block:'center', behavior:'smooth'}); }, 120);
+      if (syncLigado()) buscarNuvem();
+      return;
+    case 'syncConectar': return conectarNuvem((document.getElementById('syncUrl') || {}).value);
+    case 'syncAgora': if (sy.estado === 'erro' || sy.estado === 'offline') sy.estado = SY.pendente ? 'pendente' : 'ok'; return buscarNuvem({avisarOk:true});
+    case 'syncResolver': return resolverConflito();
+    case 'syncLink': return mostrarLink();
+    case 'syncVersoes': return versoesNuvem();
+    case 'syncSair':
+      pedir({titulo:'Desconectar este aparelho?', ok:'Desconectar', perigo:true,
+             html:'<p>Os dados continuam neste aparelho e no Drive, mas as mudanças deixam de ser sincronizadas aqui.</p>'})
+        .then(ok => { if (!ok) return; SY = {aparelho:SY.aparelho}; salvarSY(); estadoSync('off'); render(); avisar('Aparelho desconectado'); });
+      return;
+    case 'copiarLink': {
+      const el = document.getElementById('linkCon'); if (!el) return;
+      const feito = () => { b.textContent = 'Copiado ✓'; };
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(el.value).then(feito, () => { el.select(); document.execCommand('copy'); feito(); });
+      else { el.select(); document.execCommand('copy'); feito(); }
+      return;
+    }
+    case 'partilharLink': {
+      const el = document.getElementById('linkCon'); if (!el || !navigator.share) return;
+      navigator.share({title:'Conectar o Planner', text:'Abra no outro aparelho para conectar o Planner ao seu Google Drive.', url:el.value}).catch(() => {});
+      return;
+    }
+  }
+});
+app.addEventListener('change', e => {
+  if (e.target.id !== 'syncNome') return;
+  SY.aparelho = e.target.value.trim().slice(0, 30) || undefined; salvarSY();
+});
+setInterval(() => { if (syncLigado() && document.visibilityState === 'visible') buscarNuvem(); }, 60000);
+window.addEventListener('online', () => { if (syncLigado()) buscarNuvem(); });
+/* ao sair do app (trocar de app, fechar a aba): manda o que falta mesmo que a página seja fechada */
+document.addEventListener('visibilitychange', () => {
+  if (!syncLigado()) return;
+  if (document.visibilityState === 'visible') return buscarNuvem();
+  if (!SY.pendente || sy.estado === 'conflito') return;
+  const dados = dadosNuvem(), json = JSON.stringify(dados), h = hashTxt(json);
+  const corpo = `{"acao":"enviar","chave":${JSON.stringify(SY.chave)},"baseRev":${SY.rev || 0},"dispositivo":${JSON.stringify(nomeAparelho())},"hash":"${h}","dados":${json}}`;
+  if (corpo.length > 60000 || sy.enviando) return enviarNuvem();
+  clearTimeout(sy.tEnvio);
+  fetch(SY.url, {method:'POST', body:corpo, keepalive:true}).then(r => r.json()).then(r => {
+    if (!r || !r.ok || !r.rev) return;
+    SY.rev = r.rev; SY.atualizado = r.atualizado; SY.ultima = Date.now(); SY.hash = h; SY.pendente = hashLocal() !== h; salvarSY();
+    estadoSync(SY.pendente ? 'pendente' : 'ok');
+  }).catch(() => {});
+});
+
 render();
+lerLinkConexao();
+if (syncLigado()) buscarNuvem();
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
