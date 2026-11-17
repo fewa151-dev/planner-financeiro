@@ -258,6 +258,8 @@
   /* ---------- antecipações ---------- */
   .antctl{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
   .antctl .recbtn{padding:2px 8px;font-size:11.5px}
+  .recbtn.so-cel{display:none}            /* botão Recorrente que só aparece no celular (ao lado de Meses) */
+  .dotcell{display:flex;align-items:center;gap:6px;padding-left:6px}
   tr.calrow>td{background:rgba(91,95,245,.05)}
   .mcal{display:flex;gap:4px;overflow-x:auto;padding:2px 0;width:100%}
   .mc{flex:none;width:58px;display:grid;justify-items:center;gap:1px;padding:3px 2px 4px;border-radius:10px;border:1px solid var(--line)}
@@ -404,32 +406,80 @@
     .f,select.f,#dlg .f{font-size:16px}          /* evita o zoom automático do iPhone ao tocar num campo */
     .kpi .val input{font-size:18px}
     #toast{bottom:calc(88px + env(safe-area-inset-bottom));max-width:calc(100vw - 24px)}
-    /* tabelas viram cartões empilhados: cada linha um bloco, cada coluna com o próprio rótulo */
-    .tw table:not(.cal),.tw table:not(.cal)>tbody{display:block;width:100%}
+    /* tabelas viram cartões compactos: título no alto e os campos em 2 colunas,
+       com o rótulo em cima e tudo alinhado à esquerda */
+    .tw table:not(.cal),.tw table:not(.cal)>tbody{display:block;width:100%;max-width:none!important}
     .tw table:not(.cal)>thead,.tw table:not(.cal)>colgroup{display:none}
-    .tw table:not(.cal)>tbody>tr{display:block;border:1px solid var(--line);border-radius:14px;padding:6px 8px;margin-bottom:10px;background:rgba(255,255,255,.015)}
-    .tw table:not(.cal)>tbody>tr>td{display:flex;align-items:center;justify-content:space-between;gap:10px;border:0;padding:3px 2px;width:auto!important;max-width:none!important;text-align:left}
-    .tw table:not(.cal)>tbody>tr>td[data-label]::before{content:attr(data-label);flex:none;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-    .tw table:not(.cal)>tbody>tr>td:first-child::before{display:none}
-    .tw table:not(.cal)>tbody>tr>td:first-child{display:block}
-    .tw table:not(.cal)>tbody>tr>td:first-child .f.name{width:100%;font-size:16px}
-    .tw table:not(.cal)>tbody>tr>td .f:not(.name){max-width:60%}
-    .tw table:not(.cal)>tbody>tr>td.ctl{justify-content:flex-end;padding-top:4px}
+    .tw table:not(.cal)>tbody>tr{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 16px;align-items:start;
+          border:1px solid var(--line);border-radius:14px;padding:10px 12px 12px 14px;margin-bottom:8px;background:rgba(255,255,255,.015)}
+    .tw table:not(.cal)>tbody>tr>td{display:block;min-width:0;padding:0!important;border:0;width:auto!important;max-width:none!important;text-align:left;white-space:normal;font-size:15px}
     .tw table:not(.cal)>tbody>tr>td:empty{display:none}
+    .tw table:not(.cal)>tbody>tr>td[data-label]::before{content:attr(data-label);display:block;margin-bottom:5px;font-size:9.5px;font-weight:700;
+          letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    /* valor em campo tem 4px de folga interna: o rótulo encosta mais para os dois ficarem na mesma altura */
+    .tw table:not(.cal)>tbody>tr>td[data-label]:has(.f)::before{margin-bottom:1px}
+    /* o texto do campo fica alinhado com o rótulo; só o fundo do campo sai um pouco para a esquerda */
+    .tw table:not(.cal)>tbody>tr>td .f{margin-left:-9px;width:calc(100% + 9px)!important;min-width:0!important;max-width:none;text-align:left;padding-top:3px;padding-bottom:3px}
+    .tw table:not(.cal)>tbody>tr>td .mc .mcq{margin:0;width:40px!important;text-align:center;padding:1px 4px}
+    .tw table:not(.cal)>tbody>tr>td .sub2{padding:0}
+    .tw table:not(.cal)>tbody>tr>td .recfim{padding:4px 0}
+    .tw table:not(.cal)>tbody>tr>td .dotcell{padding-left:0}
+    .tw table:not(.cal)>tbody>tr>td .dotcell .f{width:auto!important;flex:1 1 auto;margin-left:-3px}
+    .tw table:not(.cal)>tbody>tr>td .meter{margin-top:6px}
+    /* título do cartão: linha inteira, sem rótulo */
+    .tw table:not(.cal)>tbody>tr>td.tit{grid-column:1/-1;order:-1;padding-right:34px!important;font-weight:800}
+    .tw table:not(.cal)>tbody>tr>td.tit::before{display:none}
+    .tw table:not(.cal)>tbody>tr>td.tit .f{font-size:16px;font-weight:700}
+    .tw table:not(.cal)>tbody>tr:has(>td.ctl [data-act="up"])>td.tit{padding-right:90px!important}
+    .tw table:not(.cal)>tbody>tr>td.lg,.tw table:not(.cal)>tbody>tr>td[colspan]{grid-column:1/-1}
+    /* ações (↑ ↓ ✕) no canto de cima; o botão de aportes ocupa a última linha */
+    .tw table:not(.cal)>tbody>tr>td.ctl{position:absolute;top:8px;right:8px}
+    .tw table:not(.cal)>tbody>tr>td.ctl:has(>.apb){position:static;grid-column:1/-1}
+    /* linhas sem título (aportes): o primeiro campo, a data, ocupa a linha de cima ao lado do ✕ */
+    .tw table:not(.cal)>tbody>tr:not(:has(>td.tit))>td:first-child{grid-column:1/-1;padding-right:34px!important}
+    .tw table:not(.cal)>tbody>tr>td input[type=date].f{width:auto!important}
+    /* bolinha de cor ao lado do título */
+    .tw table:not(.cal)>tbody>tr>td:has(>.sw){position:absolute;left:12px;top:18px}
+    .tw table:not(.cal)>tbody>tr:has(>td>.sw)>td.tit{padding-left:32px!important}
+    /* células sem rótulo (chips, etiquetas) assentam na base da linha */
+    .tw table:not(.cal)>tbody>tr>td:not([data-label]):not(.tit):not(.ctl):not([colspan]){align-self:end}
     .tw table:not(.cal)>tbody>tr.tot{border-style:dashed}
-    .tw table:not(.cal)>tbody>tr.apbox{border:0;padding:0;background:none}
-    .tw table:not(.cal)>tbody>tr.apbox>td{display:block;padding:0}
+    .tw table:not(.cal)>tbody>tr.rec{background:rgba(91,95,245,.07);box-shadow:inset 3px 0 0 var(--accent)}
+    .tw table:not(.cal)>tbody>tr.rec>td,.tw table:not(.cal)>tbody>tr.calrow>td{background:none;box-shadow:none}
+    .tw table:not(.cal)>tbody>tr.calrow{background:rgba(91,95,245,.05)}
+    .tw table:not(.cal)>tbody>tr.calrow>td.tit{padding-right:84px!important}
+    .tw table:not(.cal)>tbody>tr.apbox{display:block;border:0;padding:0;background:none}
+    .tw table:not(.cal)>tbody>tr.apbox>td{display:block}
     tr.apbox .inner{padding:8px 6px 10px 10px}
-    .tw table:not(.cal)>tbody>tr.calrow>td{display:block}
-    .ultcell{flex-wrap:wrap;justify-content:flex-end}
+    /* listas simples, sem cabeçalho (ganhos, tipos, classes): uma linha só, que quebra se faltar espaço */
+    .tw table:not(.cal):not(:has(>thead))>tbody>tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 10px 8px 14px}
+    .tw table:not(.cal):not(:has(>thead))>tbody>tr>td.tit{flex:1 1 80px;order:0;padding-right:0!important}
+    .tw table:not(.cal):not(:has(>thead))>tbody>tr>td.ctl,.tw table:not(.cal):not(:has(>thead))>tbody>tr>td:has(>.sw){position:static}
+    .tw table:not(.cal):not(:has(>thead))>tbody>tr:has(>td>.sw)>td.tit{padding-left:0!important}
+    .tw table:not(.cal):not(:has(>thead))>tbody>tr>td .f.num{width:104px!important;text-align:right}
+    /* parcelas: nome / tipo e cartão / valor e nº de parcelas / início e término / situação com os botões */
+    .tw table.parc>tbody>tr:not(.calrow){grid-template-areas:"nome nome" "tipo cartao" "valor parc" "ini fim" "sit sit"}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(1){grid-area:nome}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(2){grid-area:tipo}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(3){grid-area:valor}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(4){grid-area:ini}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(5){grid-area:parc}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(6){grid-area:fim}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(7){grid-area:sit;display:flex;flex-wrap:wrap;align-items:center;column-gap:10px}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(7)::before{flex-basis:100%}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(7) .antctl{margin:0 0 0 auto;flex-wrap:nowrap}
+    .tw table.parc>tbody>tr:not(.calrow)>td:nth-child(8){grid-area:cartao}
+    .recbtn.so-cel{display:inline-flex}
+    .recbtn.so-pc{display:none}
+    .ultcell{flex-wrap:wrap}
     .f.num{width:auto;min-width:96px}
+    .fech .f.num{min-width:0}
     /* calendário anual: rola de lado em vez de espremer 12 meses */
     table.cal{min-width:880px}
     .leg{min-width:0;width:100%;max-width:100%}
     .leg li{gap:8px}
     .pie-wrap{flex-direction:column;align-items:stretch}
     .pie-wrap>svg{align-self:center}
-    .tw table:not(.cal)>tbody>tr>td:not([data-label]):not(:first-child){justify-content:flex-end}
     .jgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
     .dlg-grid{grid-template-columns:minmax(0,1fr)}
   }
@@ -1310,7 +1360,7 @@ function vOrcamento(){
 
   const ganhos = card('Ganhos fixos', `
     <div class="tw"><table class="fit"><colgroup><col><col style="width:118px"><col style="width:86px"></colgroup>
-      <tbody>${S.ganhos.map(g => `<tr><td>${inTxt(`ganhos:${g.id}:nome`, g.nome, 'Fonte de renda')}</td><td class="r">${inNum(`ganhos:${g.id}:valor`, g.valor, {cls:'lock'})}</td>${acts('ganhos', g.id)}</tr>`).join('')
+      <tbody>${S.ganhos.map(g => `<tr><td class="tit">${inTxt(`ganhos:${g.id}:nome`, g.nome, 'Fonte de renda')}</td><td class="r">${inNum(`ganhos:${g.id}:valor`, g.valor, {cls:'lock'})}</td>${acts('ganhos', g.id)}</tr>`).join('')
         || '<tr><td class="muted" style="padding:10px 8px">Nenhuma fonte de renda.</td></tr>'}</tbody>
     </table></div>`, {right:`<span class="tot">${brl(c.arrec)}</span>`, foot:`<button class="btn ghost" data-act="add" data-col="ganhos">${ico('plus')} Ganho fixo</button>`});
 
@@ -1318,11 +1368,11 @@ function vOrcamento(){
     <div class="tw"><table class="compacta">
       <thead><tr><th>Descrição</th><th class="r">R$</th><th class="r">%</th><th>Base do %</th><th></th><th></th></tr></thead>
       <tbody>${c.fixos.map(({it, v, p}) => it.auto === 'divida' ? `
-        <tr><td>${inTxt(`fixos:${it.id}:nome`, it.nome)}<div class="sub2">Automático, vem da aba Dívida</div></td>
+        <tr><td class="tit">${inTxt(`fixos:${it.id}:nome`, it.nome)}<div class="sub2">Automático, vem da aba Dívida</div></td>
           ${par('fixos', it, v, p, {ro:true})}<td class="muted" style="padding-left:9px">—</td>
           <td><label class="chip"><input type="checkbox" data-set="fixos:${it.id}:imposto"${it.imposto ? ' checked' : ''}>Imposto</label></td>
           ${acts('fixos', it.id, {del:false})}</tr>` : `
-        <tr><td>${inTxt(`fixos:${it.id}:nome`, it.nome, 'Despesa')}</td>
+        <tr><td class="tit">${inTxt(`fixos:${it.id}:nome`, it.nome, 'Despesa')}</td>
           ${par('fixos', it, v, p)}
           <td><select class="f" data-set="fixos:${it.id}:base" style="min-width:132px">
               <option value="bruta"${it.base !== 'acima' ? ' selected' : ''}>Arrecadação</option>
@@ -1341,7 +1391,7 @@ function vOrcamento(){
         const meta = it.reserva ? Number(S.reserva.meta) || 0 : Number(it.meta) || 0;
         const saldo = it.reserva ? reservaTotal() : Number(it.saldo) || 0;
         const falta = Math.max(meta - saldo, 0), meses = meta > 0 && v > 0 ? Math.ceil(falta / v) : null;
-        return `<tr><td>${inTxt(`fundos:${it.id}:nome`, it.nome, 'Nome do fundo')}</td>
+        return `<tr><td class="tit">${inTxt(`fundos:${it.id}:nome`, it.nome, 'Nome do fundo')}</td>
           ${par('fundos', it, v, p)}
           <td class="r">${it.reserva ? `<span class="muted" style="padding-right:9px" data-tip="${esc(tipHTML('Vem da aba Reserva', []))}">${brl(meta)}</span>` : inNum(`fundos:${it.id}:meta`, meta)}</td>
           <td class="r">${it.reserva ? `<span class="muted" style="padding-right:9px" data-tip="${esc(tipHTML('Vem da aba Reserva', []))}">${brl(saldo)}</span>` : inNum(`fundos:${it.id}:saldo`, saldo)}</td>
@@ -1349,7 +1399,7 @@ function vOrcamento(){
           <td><label class="chip"><input type="radio" name="fundoReserva" data-set="fundos:${it.id}:isReserva"${it.reserva ? ' checked' : ''}>Reserva</label></td>
           ${acts('fundos', it.id)}</tr>`;
       }).join('')}
-        <tr class="tot"><td style="padding-left:12px">Total separado</td><td class="r" style="padding-right:12px">${brl(c.totalFundos)}</td>
+        <tr class="tot"><td class="tit" style="padding-left:12px">Total separado</td><td class="r" style="padding-right:12px">${brl(c.totalFundos)}</td>
           <td class="r" style="padding-right:12px">${pct(c.primario ? c.totalFundos / c.primario * 100 : 0)}</td>
           <td colspan="5" class="r muted" style="font-weight:600;padding-right:12px">Sobra para o caixa: <span class="${c.superavit < 0 ? 'neg' : ''}" style="color:${c.superavit < 0 ? '' : 'var(--ink)'};font-weight:800">${brl(c.superavit)}</span></td></tr></tbody>
     </table></div>`,
@@ -1365,7 +1415,7 @@ function vOrcamento(){
               <option value="gasto"${it.tipo === 'gasto' ? ' selected' : ''}>Gasto</option>
               <option value="renda"${it.tipo === 'renda' ? ' selected' : ''}>Renda extra</option>
               <option value="aporte"${it.tipo === 'aporte' ? ' selected' : ''}>Aporte</option></select></td>
-          <td>${inTxt(`caixa:${it.id}:nome`, it.nome, 'Descrição')}</td>
+          <td class="tit">${inTxt(`caixa:${it.id}:nome`, it.nome, 'Descrição')}</td>
           ${par('caixa', it, v, p, {semPct: it.tipo === 'renda'})}
           <td>${it.tipo === 'aporte' ? `<select class="f" data-set="caixa:${it.id}:fundoId">${fundoOpts(it.fundoId)}</select>` : `<span class="tag ${it.tipo}">${it.tipo === 'renda' ? '+ caixa' : '− caixa'}</span>`}</td>
           ${acts('caixa', it.id)}</tr>`).join('') || '<tr><td colspan="6" class="muted" style="padding:14px 8px">Nenhum lançamento neste mês.</td></tr>'}</tbody>
@@ -1503,8 +1553,10 @@ function vDivida(){
     return `<b>${atual}</b><span class="muted"> de ${cr.n}</span><div class="sub2" style="padding:0">${sub}${cr.antecipado ? ` · termina ${mesAbrev(cr.fim)}` : ''}</div>`;
   };
   /* mini calendário: a linha da parcela vira uma faixa com os meses do parcelamento e quantas parcelas foram pagas em cada um */
-  const btnCal = p => `<div class="antctl"><button type="button" class="recbtn" data-act="cal" data-id="${p.id}"
-      data-tip="${esc(tipHTML('Meses do parcelamento', [['Parcelas pagas em cada mês', ''], ['2 ou mais = antecipação', '']]))}">▦ Meses</button></div>`;
+  /* "extra": no celular o botão Recorrente mora aqui, ao lado de Meses (no PC fica junto do término) */
+  const btnCal = (p, extra = '') => `<div class="antctl">${p.ultima ? `<button type="button" class="recbtn" data-act="cal" data-id="${p.id}"
+      data-tip="${esc(tipHTML('Meses do parcelamento', [['Parcelas pagas em cada mês', ''], ['2 ou mais = antecipação', '']]))}">▦ Meses</button>` : ''}${extra}</div>`;
+  const recBtn = (p, cls) => `<button type="button" class="recbtn ${cls}${p.ultima ? '' : ' on'}" data-act="rec" data-id="${p.id}" data-tip="${esc(tipHTML(p.ultima ? 'Tornar recorrente' : 'Recorrente', [[p.ultima ? 'Despesa sem data para acabar' : 'Clique para voltar a ter data de fim', '']]))}">↻ Recorrente</button>`;
   const linhaCal = (p, cols) => {
     const cr = cron(p);
     const cells = cr.lista.map(k => {
@@ -1513,7 +1565,7 @@ function vDivida(){
         <span>${mesAbrev(k)}</span><input class="f mcq" type="text" inputmode="numeric" data-set="pagas:${p.id}:${k}" value="${m.mostra}"></div>`;
     }).join('');
     return `<tr class="calrow">
-      <td>${inTxt(`parcelas:${p.id}:nome`, p.nome, 'Nome da parcela')}<div class="sub2">${brl(p.valor)} × ${cr.n}${cr.antecipado ? ` · termina ${mesAbrev(cr.fim)}` : cr.atrasado ? ` · vai até ${mesAbrev(cr.fim)}` : ''}</div></td>
+      <td class="tit">${inTxt(`parcelas:${p.id}:nome`, p.nome, 'Nome da parcela')}<div class="sub2">${brl(p.valor)} × ${cr.n}${cr.antecipado ? ` · termina ${mesAbrev(cr.fim)}` : cr.atrasado ? ` · vai até ${mesAbrev(cr.fim)}` : ''}</div></td>
       <td colspan="${cols - 2}" style="max-width:0"><div class="mcal">${cells}</div></td>
       <td class="ctl"><button type="button" class="recbtn on" data-act="cal" data-id="${p.id}" title="Voltar para a linha normal">▦ Fechar</button></td></tr>`;
   };
@@ -1529,19 +1581,20 @@ function vDivida(){
   const quitada = p => !!p.ultima && (fimReal(p) < mes || pagaAuto(p, fimReal(p)));   // última parcela paga: vai para os quitados
   const linhas = lista => lista.filter(p => !quitada(p)).sort(ordem).map(p => { if (p.ultima && S.ui.cal[p.id]) return linhaCal(p, 9); const st = camposParc(p); return `
       <tr class="${!p.ultima ? 'rec' : ''}">
-        <td>${inTxt(`parcelas:${p.id}:nome`, p.nome, 'Nome da parcela')}</td>
-        <td style="width:170px"><div style="display:flex;align-items:center;gap:6px;padding-left:6px"><span class="dotc" style="--c:${esc(corTipo(p.tipo))}"></span>${inTxt(`parcelas:${p.id}:tipo`, p.tipo, 'Tipo', '', 'list="tiposList"')}</div></td>
+        <td class="tit">${inTxt(`parcelas:${p.id}:nome`, p.nome, 'Nome da parcela')}</td>
+        <td style="width:170px"><div class="dotcell"><span class="dotc" style="--c:${esc(corTipo(p.tipo))}"></span>${inTxt(`parcelas:${p.id}:tipo`, p.tipo, 'Tipo', '', 'list="tiposList"')}</div></td>
         <td class="r">${inNum(`parcelas:${p.id}:valor`, p.valor, {cls:'lock'})}</td>
         <td style="width:100px"${p.dataCompra ? ` data-tip="${esc(dicaCompra(p))}"` : ''}>${inMes(`parcelas:${p.id}:inicio`, p.inicio, {cls: p.ultima ? st('inicio') : 'lock', compra: p.dataCompra, cartao: S.cartoes.find(x => x.id === p.cartaoId) || {nome:'Cartão'}})}</td>
         <td class="r" style="width:84px">${p.ultima ? `<input class="f num ${st('nParc')}" type="text" inputmode="numeric" data-set="parcelas:${p.id}:nParc" value="${p.nParc ? Math.round(p.nParc) + 'x' : ''}" style="width:70px">` : '<span class="muted" style="padding-right:10px">—</span>'}</td>
         <td style="width:220px"><div class="ultcell">
           ${p.ultima ? inMes(`parcelas:${p.id}:ultima`, p.ultima, {cls: st('ultima')}) : '<span class="recfim">Sem data de fim</span>'}
-          <button type="button" class="recbtn${p.ultima ? '' : ' on'}" data-act="rec" data-id="${p.id}" data-tip="${esc(tipHTML(p.ultima ? 'Tornar recorrente' : 'Recorrente', [[p.ultima ? 'Despesa sem data para acabar' : 'Clique para voltar a ter data de fim', '']]))}">↻ Recorrente</button>
+          ${recBtn(p, 'so-pc')}
         </div></td>
-        <td style="white-space:nowrap">${restam(p)}${p.ultima ? btnCal(p) : ''}</td>
+        <td style="white-space:nowrap"><div class="sitv">${restam(p)}</div>${btnCal(p, recBtn(p, 'so-cel'))}</td>
         <td style="width:130px"><select class="f" data-set="parcelas:${p.id}:cartaoId">${cartaoOpts(p.cartaoId)}</select></td>
         ${acts('parcelas', p.id, {ord:false})}</tr>`; }).join('');
 
+  const cabParc = '<thead><tr><th>Parcela</th><th>Tipo</th><th class="r">Valor/mês</th><th>Início</th><th class="r">Parcelas</th><th>Término</th><th>Situação</th><th>Cartão</th><th></th></tr></thead>';
   const blocoCartao = k => {
     const lista = S.parcelas.filter(p => p.cartaoId === k.id);
     return `<section class="card mb" style="border-left:4px solid ${esc(k.cor)}">
@@ -1555,8 +1608,8 @@ function vDivida(){
         <div style="display:flex;align-items:center;gap:12px"><span class="muted">no mês</span><span class="tot">${brl(totalDivida(mes, k.id))}</span>
           <button class="ib del" data-act="del" data-col="cartoes" data-id="${k.id}" title="Remover cartão">✕</button></div>
       </div>
-      <div class="tw"><table>
-        <thead><tr><th>Parcela</th><th>Tipo</th><th class="r">Valor/mês</th><th>Início</th><th class="r">Parcelas</th><th>Término</th><th>Situação</th><th>Cartão</th><th></th></tr></thead>
+      <div class="tw"><table class="parc">
+        ${cabParc}
         <tbody>${linhas(lista) || '<tr><td colspan="9" class="muted" style="padding:12px 8px">Nenhuma parcela ativa.</td></tr>'}</tbody>
       </table></div>
       <div class="cf"><button class="btn ghost" data-act="add" data-col="parcelas" data-arg="${k.id}">${ico('plus')} Parcela</button></div>
@@ -1574,9 +1627,9 @@ function vDivida(){
   const totalPago = p => cron(p).pago;
   const corCartao = id => (S.cartoes.find(k => k.id === id) || {}).cor || '#5d6584';
   const linhasQuit = quitados.map(p => { if (S.ui.cal[p.id]) return linhaCal(p, 9); const st = camposParc(p); return `<tr>
-      <td>${inTxt(`parcelas:${p.id}:nome`, p.nome, 'Nome do parcelamento')}</td>
-      <td style="width:170px"><div style="display:flex;align-items:center;gap:6px;padding-left:6px"><span class="dotc" style="--c:${esc(corTipo(p.tipo))}"></span>${inTxt(`parcelas:${p.id}:tipo`, p.tipo, 'Tipo', '', 'list="tiposList"')}</div></td>
-      <td style="width:140px"><div style="display:flex;align-items:center;gap:6px;padding-left:6px"><span class="dotc" style="--c:${esc(corCartao(p.cartaoId))}"></span><select class="f" data-set="parcelas:${p.id}:cartaoId">${cartaoOpts(p.cartaoId)}</select></div></td>
+      <td class="tit">${inTxt(`parcelas:${p.id}:nome`, p.nome, 'Nome do parcelamento')}</td>
+      <td style="width:170px"><div class="dotcell"><span class="dotc" style="--c:${esc(corTipo(p.tipo))}"></span>${inTxt(`parcelas:${p.id}:tipo`, p.tipo, 'Tipo', '', 'list="tiposList"')}</div></td>
+      <td style="width:140px"><div class="dotcell"><span class="dotc" style="--c:${esc(corCartao(p.cartaoId))}"></span><select class="f" data-set="parcelas:${p.id}:cartaoId">${cartaoOpts(p.cartaoId)}</select></div></td>
       <td class="r">${inNum(`parcelas:${p.id}:valor`, p.valor, {cls:'lock'})}</td>
       <td style="width:100px"${p.dataCompra ? ` data-tip="${esc(dicaCompra(p))}"` : ''}>${inMes(`parcelas:${p.id}:inicio`, p.inicio, {cls: st('inicio'), compra: p.dataCompra, cartao: S.cartoes.find(x => x.id === p.cartaoId) || {nome:'Cartão'}})}</td>
       <td class="r" style="width:84px"><input class="f num ${st('nParc')}" type="text" inputmode="numeric" data-set="parcelas:${p.id}:nParc" value="${p.nParc ? Math.round(p.nParc) + 'x' : ''}" style="width:70px"></td>
@@ -1619,10 +1672,10 @@ function vDivida(){
     <div class="phead" style="margin:28px 0 14px"><div><div class="eyebrow">Parcelas por cartão</div><p class="hint" style="margin:6px 0 0">Preencha 2 de 3: <b>início</b>, <b>nº de parcelas</b> ou <b>término</b>. O terceiro é calculado (em cinza). Os dois em destaque são os que você digitou.</p></div>
       <div class="acts"><button class="btn" data-act="add" data-col="cartoes">${ico('plus')} Cartão</button></div></div>
     ${S.cartoes.map(blocoCartao).join('')}
-    ${orfas.length ? card('Sem cartão', `<div class="tw"><table><tbody>${linhas(orfas)}</tbody></table></div>`, {cls:'mb'}) : ''}
+    ${orfas.length ? card('Sem cartão', `<div class="tw"><table class="parc">${cabParc}<tbody>${linhas(orfas)}</tbody></table></div>`, {cls:'mb'}) : ''}
     ${card('Tipos de gasto', `<div class="tw"><table style="max-width:560px"><tbody>
         ${S.tipos.map(t => `<tr><td style="width:30px;padding-left:10px"><input type="color" class="sw" data-tipocor="${esc(t)}" value="${esc(S.tiposCor[t] || '#7c85ad')}"></td>
-          <td><input class="f name" type="text" data-tipo="${esc(t)}" value="${esc(t)}"></td><td class="muted">${tipoCount(t)} parcela(s)</td>
+          <td class="tit"><input class="f name" type="text" data-tipo="${esc(t)}" value="${esc(t)}"></td><td class="muted">${tipoCount(t)} parcela(s)</td>
           <td class="ctl">${tipoCount(t) ? '' : `<button class="ib del" data-act="deltipo" data-arg="${esc(t)}" title="Remover">✕</button>`}</td></tr>`).join('')}
       </tbody></table></div>`, {dica:'Digite um tipo novo direto na parcela e ele aparece aqui. Renomear aqui atualiza todas as parcelas.', foot:`<button class="btn ghost" data-act="addtipo">${ico('plus')} Tipo</button>`, cls:'mb'})}
     ${cardQuit}`;
@@ -1662,7 +1715,7 @@ function vReserva(){
     const r = s ? s.atual - s.investido : null, rp = r != null && s.investido ? r / s.investido * 100 : null;
     return `<tr>
       <td style="width:30px;padding-left:10px"><input type="color" class="sw" data-set="ativos:${a.id}:cor" value="${esc(a.cor || PALETA[0])}" title="Cor no gráfico"></td>
-      <td>${inTxt(`ativos:${a.id}:produto`, a.produto, 'Produto financeiro')}</td>
+      <td class="tit">${inTxt(`ativos:${a.id}:produto`, a.produto, 'Produto financeiro')}</td>
       <td class="r" style="width:96px">${inNum(`ativos:${a.id}:pctCDI`, a.pctCDI, {cls:'sm lock'})}</td>
       <td class="r v">${brl(investidoRes(a))}</td>
       <td class="r">${s ? `<span class="v" style="font-weight:700">${brl(v)}</span>` : inNum(`ativos:${a.id}:valor`, a.valor, {cls:'lock'})}</td>
@@ -1730,7 +1783,7 @@ function vReserva(){
       ${card('Onde está a reserva', `<div class="tw"><table>
           <thead><tr><th></th><th>Produto financeiro</th><th class="r">% do CDI</th><th class="r">Investido</th><th class="r">Valor atual</th><th class="r">Rendimento</th><th class="r">% da reserva</th><th>Liquidez</th><th></th><th></th></tr></thead>
           <tbody>${S.reserva.ativos.map(linhaAtivo).join('') || '<tr><td colspan="10" class="muted" style="padding:12px 8px">Nenhuma aplicação cadastrada.</td></tr>'}
-            <tr class="tot"><td></td><td>Total</td><td></td><td class="r v">${brl(inv)}</td><td class="r v">${brl(tot)}</td><td class="r v ${rend < 0 ? 'neg' : rend > 0 ? 'pos' : ''}">${comAportes.length ? brlS(rend) : ''}</td><td class="r v">100%</td><td colspan="3"></td></tr></tbody>
+            <tr class="tot"><td></td><td class="tit">Total</td><td></td><td class="r v">${brl(inv)}</td><td class="r v">${brl(tot)}</td><td class="r v ${rend < 0 ? 'neg' : rend > 0 ? 'pos' : ''}">${comAportes.length ? brlS(rend) : ''}</td><td class="r v">100%</td><td colspan="3"></td></tr></tbody>
         </table></div>`, {foot:`<button class="btn ghost" data-act="add" data-col="ativos">${ico('plus')} Aplicação</button>`,
           dica:'Aplicações sem aportes usam o valor que você digita. Ao lançar aportes, o valor atual é calculado pelo CDI diário do Banco Central × o % do CDI de cada aplicação (valor bruto, antes do IR).'})}`;
 }
@@ -1886,12 +1939,12 @@ function vPatrimonio(){
     <div class="tw"><table>
       <thead><tr><th>Bem</th><th>Categoria</th><th class="r">Valor</th><th>Desde</th><th></th></tr></thead>
       <tbody>${S.bens.map(b => `<tr>
-          <td>${inTxt(`bens:${b.id}:nome`, b.nome, 'Ex.: Carro')}</td>
+          <td class="tit">${inTxt(`bens:${b.id}:nome`, b.nome, 'Ex.: Carro')}</td>
           <td style="width:200px">${inTxt(`bens:${b.id}:categoria`, b.categoria, 'Categoria', '', 'list="catBens"')}</td>
           <td class="r">${inNum(`bens:${b.id}:valor`, b.valor, {cls:'lock'})}</td>
           <td style="width:110px">${inMes(`bens:${b.id}:mes`, b.mes, {opcional:true, cls: b.mes ? 'lock' : ''})}</td>
           ${acts('bens', b.id)}</tr>`).join('') || '<tr><td colspan="5" class="muted" style="padding:12px 8px">Nenhum bem cadastrado.</td></tr>'}
-        <tr class="tot"><td style="padding-left:12px">Total</td><td></td><td class="r" style="padding-right:12px">${brl(totalBens())}</td><td colspan="2"></td></tr></tbody>
+        <tr class="tot"><td class="tit" style="padding-left:12px">Total</td><td></td><td class="r" style="padding-right:12px">${brl(totalBens())}</td><td colspan="2"></td></tr></tbody>
     </table></div>`, {right:`<span class="tot">${brl(totalBens())}</span>`, dica:'Imóveis, veículos e outros bens com valor de mercado. Entram nos ativos do patrimônio a partir do mês informado (ou sempre, se vazio).',
       foot:`<button class="btn ghost" data-act="add" data-col="bens">${ico('plus')} Bem</button>`});
 
@@ -2019,8 +2072,8 @@ function vInvestimentos(){
       : (!p.manual && q && esperado && q.moeda !== esperado) ? `Este ativo é cotado em ${q.moeda}, não em ${esperado}.` : '';
     const classesOk = S.classes.filter(c => MERCADO_DA_MOEDA[p.ref].includes(c.mercado || 'AMBOS') || c.id === a.classeId);
     return `<tr>
-      <td style="width:118px">${btc ? '<span class="f tick" style="display:inline-block">BTC</span>' : inTxt(`inv:${a.id}:ticker`, a.ticker, p.manual ? 'opcional' : p.ref === 'USD' ? 'AAPL' : 'PETR4', 'tick')}</td>
-      <td>${inTxt(`inv:${a.id}:nome`, a.nome || (q && !p.manual ? q.nome : ''), p.manual ? 'Nome do produto' : 'Nome automático')}${aviso ? `<div class="sub2 neg">${esc(aviso)}</div>` : ''}</td>
+      <td class="tit" style="width:118px">${btc ? '<span class="f tick" style="display:inline-block">BTC</span>' : inTxt(`inv:${a.id}:ticker`, a.ticker, p.manual ? 'opcional' : p.ref === 'USD' ? 'AAPL' : 'PETR4', 'tick')}</td>
+      <td class="lg">${inTxt(`inv:${a.id}:nome`, a.nome || (q && !p.manual ? q.nome : ''), p.manual ? 'Nome do produto' : 'Nome automático')}${aviso ? `<div class="sub2 neg">${esc(aviso)}</div>` : ''}</td>
       <td style="width:150px">${btc ? '<span class="muted" style="padding-left:9px">Bitcoin</span>'
         : `<select class="f" data-set="inv:${a.id}:classeId" style="min-width:130px">${classesOk.map(c => `<option value="${c.id}"${c.id === a.classeId ? ' selected' : ''}>${esc(c.nome)}</option>`).join('')}</select>`}</td>
       <td class="r v">${p.manual ? '<span class="muted">—</span>' : (p.qtd ? p.qtd.toLocaleString('pt-BR', {maximumFractionDigits:6}) : '0')}</td>
@@ -2079,7 +2132,7 @@ function vInvestimentos(){
       ${S.carteiras.filter(c => sel === 'todas' || c.id === sel).map(blocoCarteira).join('')}
       ${card('Classes de ativos', `<div class="tw"><table style="max-width:860px"><tbody>
           ${S.classes.map(c => `<tr><td style="width:30px;padding-left:10px"><input type="color" class="sw" data-set="classes:${c.id}:cor" value="${esc(c.cor)}"></td>
-            <td>${inTxt(`classes:${c.id}:nome`, c.nome, 'Nome da classe')}</td>
+            <td class="tit">${inTxt(`classes:${c.id}:nome`, c.nome, 'Nome da classe')}</td>
             <td style="width:210px"><select class="f" data-set="classes:${c.id}:mercado" title="Em que carteira esta classe pode entrar">${MERCADOS.map(([v, l]) => `<option value="${v}"${(c.mercado || 'AMBOS') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></td>
             <td><label class="chip" data-tip="${esc(tipHTML(c.manual ? 'Valor manual' : 'Cotação automática', [[c.manual ? 'Você informa o valor atual' : 'Preço vem da bolsa pelo ticker', '']]))}"><input type="checkbox" data-set="classes:${c.id}:auto"${c.manual ? '' : ' checked'}>Cotação automática</label></td>
             <td class="muted">${usoClasse(c.id)} ativo(s)</td>
